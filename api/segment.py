@@ -1,7 +1,9 @@
-"""Vercel Python function: POST raw image bytes, get back the plate highlighted.
+"""Vercel Python function: POST raw image bytes, get back the plate region edited.
 
-The demo page in ``public/index.html`` is the client. Only the segmentation
-code is imported, no pandas or matplotlib, to keep the cold start short.
+`?mode=censor` (default) blurs the detected plate/sign region, `?mode=highlight`
+keeps it sharp and blurs the rest. The demo page in ``public/index.html`` is the
+client. Only the segmentation code is imported, no pandas or matplotlib, to keep
+the cold start short.
 """
 
 from __future__ import annotations
@@ -9,26 +11,32 @@ from __future__ import annotations
 import sys
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from censor_license_plate.segmentation import highlight  # noqa: E402
+from censor_license_plate.segmentation import censor, highlight  # noqa: E402
 
 MAX_BODY_BYTES = 8 * 1024 * 1024
+MODES = {"censor": censor, "highlight": highlight}
+DEFAULT_MODE = "censor"
 
 
 class handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         try:
+            # Read the body first: answering before draining it resets the
+            # connection for the client while it is still uploading.
             body = self._read_body()
+            mode = self._mode()
             image = cv2.imdecode(np.frombuffer(body, np.uint8), cv2.IMREAD_COLOR)
             if image is None:
                 self._send(400, b"cannot decode image data", "text/plain")
                 return
-            result = highlight(image)
+            result = MODES[mode](image)
             ok, buffer = cv2.imencode(".png", cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
             if not ok:
                 self._send(500, b"png encoding failed", "text/plain")
@@ -41,6 +49,12 @@ class handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         self._send(405, b"POST an image body to this endpoint", "text/plain")
+
+    def _mode(self) -> str:
+        requested = parse_qs(urlparse(self.path).query).get("mode", [DEFAULT_MODE])[0]
+        if requested not in MODES:
+            raise ValueError(f"unknown mode {requested!r}, expected one of {sorted(MODES)}")
+        return requested
 
     def _read_body(self) -> bytes:
         length = int(self.headers.get("content-length") or 0)

@@ -9,7 +9,7 @@ import cv2
 
 from .dataset import write_dataset
 from .plots import histogram_figure
-from .segmentation import highlight, segment
+from .segmentation import censor, highlight, segment
 
 DEFAULT_IMAGES = "data/images/rambu"
 DEFAULT_DATASET = "data/rambu_dataset.csv"
@@ -33,14 +33,18 @@ def cmd_segment(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_highlight(args: argparse.Namespace) -> int:
+MODES = {"highlight": highlight, "censor": censor}
+
+
+def cmd_mode(args: argparse.Namespace) -> int:
     image = cv2.imread(args.image)
     if image is None:
         raise SystemExit(f"cannot read {args.image}")
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    cv2.imwrite(str(out), cv2.cvtColor(highlight(image), cv2.COLOR_RGB2BGR))
-    print(f"{args.image}: highlighted region -> {out}")
+    result = MODES[args.mode](image)
+    cv2.imwrite(str(out), cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
+    print(f"{args.image}: {args.mode} -> {out}")
     return 0
 
 
@@ -71,10 +75,14 @@ def build_parser() -> argparse.ArgumentParser:
     segment_cmd.add_argument("--out", default="out/segment.png")
     segment_cmd.set_defaults(func=cmd_segment)
 
-    highlight_cmd = sub.add_parser("highlight", help="blur everything but the sign region")
-    highlight_cmd.add_argument("image")
-    highlight_cmd.add_argument("--out", default="out/highlight.png")
-    highlight_cmd.set_defaults(func=cmd_highlight)
+    for mode, help_text, default_out in (
+        ("censor", "blur the plate/sign region, keep the rest sharp", "out/censor.png"),
+        ("highlight", "keep the plate/sign region sharp, blur the rest", "out/highlight.png"),
+    ):
+        mode_cmd = sub.add_parser(mode, help=help_text)
+        mode_cmd.add_argument("image")
+        mode_cmd.add_argument("--out", default=default_out)
+        mode_cmd.set_defaults(func=cmd_mode, mode=mode)
 
     histogram_cmd = sub.add_parser(
         "histogram", help="draw the grayscale and RGB histograms of one image"

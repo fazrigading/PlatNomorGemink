@@ -68,17 +68,36 @@ def segment(
     return crop_to_mask(mask, rgb), contour
 
 
+def _region_and_blur(
+    image: np.ndarray, rank: int, width: int, blur_divisor: int
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return the resized image, its region mask and a blurred copy."""
+    image = resize_to_width(image, width)
+    _, edges = threshold_edges(image)
+    mask = filled_mask(image.shape, contour_by_area(edges, rank))
+    kernel = max(1, int(image.shape[0] / blur_divisor))
+    return image, mask, cv2.blur(image, (kernel, kernel))
+
+
 def highlight(
     image: np.ndarray,
     rank: int = DEFAULT_RANK,
     width: int = TARGET_WIDTH,
     blur_divisor: int = 7,
 ) -> np.ndarray:
-    """Keep the ranked region sharp and blur the rest of the image."""
-    image = resize_to_width(image, width)
-    _, edges = threshold_edges(image)
-    mask = filled_mask(image.shape, contour_by_area(edges, rank))
-    kernel = max(1, int(image.shape[0] / blur_divisor))
-    blurred = cv2.blur(image, (kernel, kernel))
+    """Mode `highlight`: keep the ranked region sharp, blur the rest."""
+    image, mask, blurred = _region_and_blur(image, rank, width, blur_divisor)
     out = np.where(mask[:, :, None] == 255, image, blurred)
+    return cv2.cvtColor(out.astype(np.uint8), cv2.COLOR_BGR2RGB)
+
+
+def censor(
+    image: np.ndarray,
+    rank: int = DEFAULT_RANK,
+    width: int = TARGET_WIDTH,
+    blur_divisor: int = 7,
+) -> np.ndarray:
+    """Mode `censor`: blur the ranked region, keep the rest sharp."""
+    image, mask, blurred = _region_and_blur(image, rank, width, blur_divisor)
+    out = np.where(mask[:, :, None] == 255, blurred, image)
     return cv2.cvtColor(out.astype(np.uint8), cv2.COLOR_BGR2RGB)

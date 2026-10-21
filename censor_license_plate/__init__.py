@@ -9,8 +9,9 @@ from .features import (
 )
 from .plots import histogram_figure
 from .segmentation import (
-    crop_to_mask,
+    censor,
     contour_by_area,
+    crop_to_mask,
     filled_mask,
     highlight,
     resize_to_width,
@@ -19,6 +20,7 @@ from .segmentation import (
 )
 
 __all__ = [
+    "censor",
     "color_histograms",
     "contour_by_area",
     "crop_to_mask",

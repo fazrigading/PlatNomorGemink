@@ -47,6 +47,20 @@
       input[type="file"] {
         color: var(--fg);
       }
+      fieldset {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.5rem 0.75rem 0.75rem;
+      }
+      legend {
+        color: var(--muted);
+        font-size: 0.875rem;
+        padding: 0 0.4rem;
+      }
+      fieldset label {
+        display: block;
+        margin: 0.3rem 0;
+      }
       button {
         justify-self: start;
         padding: 0.55rem 1.1rem;
@@ -97,13 +111,19 @@
     <main>
       <h1>CensorLicensePlate</h1>
       <p class="lead">
-        Deteksi region plat nomor / rambu secara otomatis. Region yang terdeteksi tetap tajam,
-        sisanya diblur.
+        Deteksi region plat nomor / rambu secara otomatis dengan OpenCV. Mode
+        <em>sensor</em> memblur region yang terdeteksi supaya plat tidak terbaca,
+        mode <em>tampilkan</em> mempertajam region itu dan memblur sisanya.
       </p>
 
       <form id="upload">
         <label for="file">Pilih foto kendaraan (JPG atau PNG, maksimal 8 MB)</label>
         <input id="file" name="file" type="file" accept="image/*" required />
+        <fieldset>
+          <legend>Mode</legend>
+          <label><input type="radio" name="mode" value="censor" checked /> Sensor plat nomor (region diblur)</label>
+          <label><input type="radio" name="mode" value="highlight" /> Tampilkan plat nomor (sekitar diblur)</label>
+        </fieldset>
         <button id="submit" type="submit">Proses</button>
         <output class="status" id="status"></output>
       </form>
@@ -141,7 +161,8 @@
         button.disabled = true;
 
         try {
-          const response = await fetch("/api/segment", {
+          const mode = form.elements.mode.value;
+          const response = await fetch(`/api/segment?mode=${encodeURIComponent(mode)}`, {
             method: "POST",
             headers: { "content-type": "application/octet-stream" },
             body: file,
