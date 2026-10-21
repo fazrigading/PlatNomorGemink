@@ -15,7 +15,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from platnomor.segmentation import highlight  # noqa: E402
+from censor_license_plate.segmentation import highlight  # noqa: E402
 
 MAX_BODY_BYTES = 8 * 1024 * 1024
 

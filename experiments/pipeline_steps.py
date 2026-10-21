@@ -1,4 +1,4 @@
-"""Step by step record of the segmentation experiments that led to platnomor/.
+"""Step by step record of the segmentation experiments that led to censor_license_plate/.
 
 Run it to see every intermediate image of the pipeline::
 
@@ -20,7 +20,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from platnomor.segmentation import (  # noqa: E402
+from censor_license_plate.segmentation import (  # noqa: E402
     contour_by_area,
     filled_mask,
     threshold_edges,

@@ -1,4 +1,4 @@
-"""Command line entry point: python -m platnomor <command>."""
+"""Command line entry point: python -m censor_license_plate <command>."""
 
 from __future__ import annotations
 
@@ -57,7 +57,7 @@ def cmd_histogram(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="platnomor", description=__doc__)
+    parser = argparse.ArgumentParser(prog="censor_license_plate", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
     dataset = sub.add_parser("dataset", help="rebuild the feature dataset CSV")
