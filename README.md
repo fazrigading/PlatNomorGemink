@@ -1,10 +1,47 @@
 # CensorLicensePlate
 
-Segment the licence plate (and traffic sign) region of a vehicle photo with OpenCV. 
-The detected region stays sharp while the rest of the image is blurred.
+Segment the licence plate (and traffic sign) region of a vehicle photo with OpenCV.
+The detected region is then either blurred or shown, depending on the mode.
+
+| mode | detected region | rest of the image |
+| --- | --- | --- |
+| `censor` (default) | blurred | untouched |
+| `highlight` | untouched | blurred |
+| `segment` | cropped out on its own | dropped |
+
 The repo also turns a folder of images into a feature dataset for shape classification.
 
 Bahasa Indonesia: [README_id.md](README_id.md)
+
+## Modes in detail
+
+Every mode starts the same way: scale to 1000 px wide, threshold, pick a contour
+by area rank, build its filled mask. They differ only in what the mask selects.
+
+| mode | Python | CLI | API | the mask selects |
+| --- | --- | --- | --- | --- |
+| censor | `censor(image)` | `censor <image> --out out/censor.png` | `POST /api/segment?mode=censor` | blur inside the mask, keep the pixels outside it |
+| highlight | `highlight(image)` | `highlight <image> --out out/highlight.png` | `POST /api/segment?mode=highlight` | keep inside the mask sharp, blur the pixels outside it |
+| segment | `segment(image)` | `segment <image> --out out/segment.png` | — | crop the mask bounding box, discard the rest |
+| histogram | `histogram_figure(image)` | `histogram <image> --out out/histogram.png` | — | no mask: plots intensity counts |
+| dataset | `dataset.build_rows(folder)` | `dataset --images DIR --csv FILE` | — | no mask: `segment` plus a feature vector per image |
+
+`censor` and `highlight` are exact inverses. On `data/images/plat/rl2.jpg`, every
+pixel inside the plate mask equals the blurred copy in one mode and the original
+in the other:
+
+```
+censor    inside plate == blurred,  outside plate == original
+highlight inside plate == original, outside plate == blurred
+```
+
+Blur strength comes from `blur_divisor` (default 7): the box kernel is
+`image height / 7`, so on a 1779 px tall photo the kernel is 254 px, wide enough
+to destroy the characters. Raise the divisor for a softer blur, lower it for a
+stronger one. `segment` applies no blur; it only crops.
+
+`histogram` and `dataset` are analysis helpers, not privacy modes: they do not
+modify the image you feed in, they describe it.
 
 ## How it works
 
@@ -12,8 +49,8 @@ Bahasa Indonesia: [README_id.md](README_id.md)
 2. Grayscale, then an inverted Otsu threshold and a dilated Canny edge map.
 3. Contours are sorted by area; the second largest one is the plate in the
    photos of this repo (the largest is the image border).
-4. The contour mask crops the region, or keeps it sharp while the rest of the
-   image is blurred.
+4. The mask then feeds one of the modes above: blur it (`censor`), keep it sharp
+   (`highlight`), or crop it (`segment`).
 
 Every image is normalised to 1000 px first so the parameters (rank `-2`, blur
 divisor 7) stay consistent. On `data/images/plat/rl2.jpg` the pipeline captures
@@ -26,12 +63,12 @@ ratio filter that can be added as an extra stage.
 
 ```tree
 censor_license_plate/         # core Python package
-  segmentation.py             # resize, threshold, contour selection, crop, highlight
+  segmentation.py             # resize, threshold, contour selection, censor, highlight, segment
   features.py                 # 32x32 resize, 64 element feature vector, vertex count, grayscale and per channel histograms
   plots.py                    # histogram figure drawn with OpenCV
   dataset.py                  # build the dataset CSV from a folder of images
   __main__.py                 # CLI
-api/segment.py                # Vercel function (POST raw image, answer a PNG)
+api/segment.py                # Vercel function (POST raw image + ?mode=, answer a PNG)
 public/index.html             # demo page that calls that function
 experiments/pipeline_steps.py # experiment log, writes one image per pipeline stage
 data/images/                  # input photos (plat/, rambu/)
@@ -53,7 +90,13 @@ Rebuild the dataset from the image folder:
 .venv/bin/python -m censor_license_plate dataset --images data/images/rambu --csv data/rambu_dataset.csv
 ```
 
-Crop the plate region of one image, or blur everything around it:
+Blur the plate region so it cannot be read (the default mode):
+
+```bash
+.venv/bin/python -m censor_license_plate censor data/images/plat/rl2.jpg --out out/censor.png
+```
+
+Crop the plate region, or keep it sharp and blur everything around it:
 
 ```bash
 .venv/bin/python -m censor_license_plate segment data/images/plat/rl2.jpg --out out/segment.png
@@ -90,9 +133,18 @@ Render every pipeline stage as an image:
 
 Production: <https://censor-license-plate.vercel.app>
 
-`api/segment.py` accepts a `POST` with raw image bytes and replies with a PNG of
-the highlighted region. `public/index.html` uses that endpoint through a file
-upload form.
+`api/segment.py` accepts a `POST` with raw image bytes and replies with a PNG.
+The `mode` query parameter picks the behaviour; omitting it means `censor`:
+
+| request | response |
+| --- | --- |
+| `POST /api/segment` | plate region blurred |
+| `POST /api/segment?mode=censor` | plate region blurred |
+| `POST /api/segment?mode=highlight` | plate region sharp, rest blurred |
+| `POST /api/segment?mode=bogus` | `422 unknown mode 'bogus', expected one of ['censor', 'highlight']` |
+
+`public/index.html` uses that endpoint through a file upload form with a mode
+switch.
 
 ```bash
 vercel dev                      # local preview

@@ -1,8 +1,42 @@
 # CensorLicensePlate
 
 Segmentasi region plat nomor (dan rambu) dari foto kendaraan dengan OpenCV.
-Region yang terdeteksi tetap tajam, sisanya diblur. Selain itu repo ini bisa
-mengubah folder gambar menjadi dataset fitur untuk klasifikasi bentuk.
+Region yang terdeteksi lalu diblur atau dipertajam, tergantung mode.
+
+| mode | region terdeteksi | sisa gambar |
+| --- | --- | --- |
+| `censor` (default) | diblur | dibiarkan |
+| `highlight` | dibiarkan | diblur |
+| `segment` | di-crop sendiri | dibuang |
+
+Selain itu repo ini bisa mengubah folder gambar menjadi dataset fitur untuk
+klasifikasi bentuk.
+
+## Mode
+
+Semua mode memakai langkah awal yang sama: skala ke lebar 1000 px, threshold,
+pilih kontur berdasarkan peringkat luas, buat mask-nya. Bedanya hanya apa yang
+dipilih mask itu.
+
+| mode | Python | CLI | API | mask memilih |
+| --- | --- | --- | --- | --- |
+| censor | `censor(image)` | `censor <gambar> --out out/censor.png` | `POST /api/segment?mode=censor` | blur di dalam mask, piksel luar dibiarkan |
+| highlight | `highlight(image)` | `highlight <gambar> --out out/highlight.png` | `POST /api/segment?mode=highlight` | dalam mask tetap tajam, luar diblur |
+| segment | `segment(image)` | `segment <gambar> --out out/segment.png` | — | crop kotak pembatas mask, sisanya dibuang |
+| histogram | `histogram_figure(image)` | `histogram <gambar> --out out/histogram.png` | — | bukan mode mask: gambar histogram |
+| dataset | `dataset.build_rows(folder)` | `dataset --images DIR --csv FILE` | — | bukan mode mask: `segment` plus vektor fitur per gambar |
+
+`censor` dan `highlight` berkebalikan persis. Pada `data/images/plat/rl2.jpg`,
+setiap piksel di dalam mask plat sama dengan versi blur di satu mode dan sama
+dengan gambar asli di mode lain.
+
+Kekuatan blur diatur `blur_divisor` (default 7): kernel kotak = tinggi gambar / 7,
+jadi pada foto setinggi 1779 px kernelnya 254 px dan huruf plat tidak terbaca.
+Perbesar divisor untuk blur lebih halus, perkecil untuk lebih kuat. `segment`
+tidak memakai blur sama sekali.
+
+`histogram` dan `dataset` adalah alat analisis, bukan mode privasi: keduanya
+tidak mengubah gambar, hanya menjelaskannya.
 
 ## Cara kerja
 
@@ -10,8 +44,8 @@ mengubah folder gambar menjadi dataset fitur untuk klasifikasi bentuk.
 2. Grayscale, lalu threshold Otsu (INV) dan Canny yang didilatasi.
 3. Kontur diurutkan berdasarkan luas; kontur peringkat 2 terbesar adalah plat
    pada foto-foto di repo ini (kontur terbesar adalah tepi gambar).
-4. Mask kontur dipakai untuk crop region, atau untuk menyisakan region tetap
-   tajam sementara sisanya diblur.
+4. Mask kontur lalu dipakai salah satu mode di atas: diblur (`censor`),
+   dipertajam (`highlight`), atau di-crop (`segment`).
 
 Setiap gambar dinormalisasi dulu ke 1000 px agar parameter (`-2`, divisor blur 7)
 konsisten. Pada `data/images/plat/rl2.jpg` pipeline ini menangkap seluruh plat
@@ -23,18 +57,18 @@ bisa dipakai sebagai tahap tambahan.
 ## Struktur repo
 
 ```
-censor_license_plate/                 paket Python inti
-  segmentation.py            resize, threshold, pemilihan kontur, crop, highlight
+censor_license_plate/          paket Python inti
+  segmentation.py            resize, threshold, pemilihan kontur, censor, highlight, segment
   features.py                resize 32x32, vektor fitur 64 elemen, jumlah segi,
                              histogram grayscale dan per kanal
   plots.py                   gambar histogram yang dirender dengan OpenCV
   dataset.py                 bangun CSV dataset dari folder gambar
   __main__.py                CLI
-api/segment.py             fungsi Vercel (POST gambar mentah, balas PNG)
-public/index.html          halaman demo yang memanggil fungsi tersebut
+api/segment.py                 fungsi Vercel (POST gambar mentah + ?mode=, balas PNG)
+public/index.html              halaman demo yang memanggil fungsi tersebut
 experiments/pipeline_steps.py  catatan langkah eksperimen, hasilkan gambar tiap tahap
-data/images/               foto masukan (plat/, rambu/)
-data/rambu_dataset.csv     dataset fitur hasil pipeline
+data/images/                   foto masukan (plat/, rambu/)
+data/rambu_dataset.csv         dataset fitur hasil pipeline
 ```
 
 ## Menjalankan
@@ -52,7 +86,13 @@ Bangun ulang dataset dari folder gambar:
 .venv/bin/python -m censor_license_plate dataset --images data/images/rambu --csv data/rambu_dataset.csv
 ```
 
-Buat crop region plat dari satu gambar, atau blur sekelilingnya:
+Blur region plat supaya tidak terbaca (mode default):
+
+```
+.venv/bin/python -m censor_license_plate censor data/images/plat/rl2.jpg --out out/censor.png
+```
+
+Buat crop region plat dari satu gambar, atau pertajam region itu dan blur sekelilingnya:
 
 ```
 .venv/bin/python -m censor_license_plate segment data/images/plat/rl2.jpg --out out/segment.png
@@ -89,9 +129,17 @@ Lihat setiap tahap pipeline sebagai gambar:
 
 Produksi: <https://censor-license-plate.vercel.app>
 
-`api/segment.py` menerima `POST` berisi byte gambar mentah dan membalas PNG
-hasil highlight. Halaman `public/index.html` memakai endpoint itu lewat form
-unggah berkas.
+`api/segment.py` menerima `POST` berisi byte gambar mentah dan membalas PNG.
+Query `mode` menentukan perilakunya; tanpa query itu artinya `censor`:
+
+| request | balasan |
+| --- | --- |
+| `POST /api/segment` | region plat diblur |
+| `POST /api/segment?mode=censor` | region plat diblur |
+| `POST /api/segment?mode=highlight` | region plat tajam, sekitarnya diblur |
+| `POST /api/segment?mode=bogus` | `422 unknown mode 'bogus', expected one of ['censor', 'highlight']` |
+
+`public/index.html` memakai endpoint itu lewat form unggah berkas dengan pilihan mode.
 
 ```
 vercel dev                      # pratinjau lokal
