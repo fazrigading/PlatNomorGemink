@@ -75,21 +75,34 @@ Lihat setiap tahap pipeline sebagai gambar:
 
 ## Hosting di Vercel
 
+Produksi: <https://platnomor-gemink.vercel.app>
+
 `api/segment.py` menerima `POST` berisi byte gambar mentah dan membalas PNG
 hasil highlight. Halaman `public/index.html` memakai endpoint itu lewat form
 unggah berkas.
 
 ```
-npm i -g vercel
-vercel dev      # pratinjau lokal
-vercel          # deploy pratinjau
-vercel --prod   # deploy produksi
+vercel dev                      # pratinjau lokal
+vercel deploy                   # deploy pratinjau
+vercel deploy --prod --yes --project platnomor-gemink
 ```
 
-Fungsi hanya mengimpor `numpy` dan `opencv-python-headless` dari
-`requirements.txt`. Seluruh repo ada di paket deploy karena fungsi mengimpor
-`platnomor/`, jadi gambar di `data/` ikut terunggah, tetapi tidak dipakai saat
-request.
+Vercel CLI tidak menemukan `api/segment.py` sendiri, jadi `pyproject.toml`
+mendeklarasikan entrypoint-nya:
+
+```toml
+[tool.vercel]
+entrypoint = "api.segment:handler"
+```
+
+CLI juga menjalankan `uv lock` dengan `pyproject.toml` sebagai proyek, jadi
+tabel `[project]` wajib ada dan `[project.dependencies]` harus memuat `numpy`
+serta `opencv-python-headless`. `requirements.txt` tetap dipakai runtime.
+
+Proyek ini punya Deployment Protection, jadi URL produksi meminta login Vercel.
+Gunakan `vercel curl <url>` atau matikan proteksi di dashboard. `.vercelignore`
+menyisihkan `.codegraph/`, `.projectmem/`, `.commandcode/`, `.venv/`, dan `out/`
+saat unggah; berkas di `data/` ikut terunggah tetapi tidak dipakai saat request.
 
 ## Catatan
 
