@@ -11,7 +11,7 @@ The detected region is then either blurred or shown, depending on the mode.
 
 The repo also turns a folder of images into a feature dataset for shape classification.
 
-Bahasa Indonesia: [README_id.md](README_id.md)
+Bahasa Indonesia: [README.id.md](README.id.md)
 
 ## Modes in detail
 
