@@ -9,7 +9,7 @@ Replace this placeholder with a concise description of what this project does, w
 - [DONE] #legacy_03be Legacy issue: fix comvis -> fix comvis (fixed)
 
 ## Decisions
-- No decisions logged yet.
+- Refactor: refactor: group images and dataset under data/ [data/rambu_dataset.csv]
 
 ## Notes
 - repisi Gemink
