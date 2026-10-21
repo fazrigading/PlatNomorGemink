@@ -25,7 +25,9 @@ bisa dipakai sebagai tahap tambahan.
 ```
 platnomor/                 paket Python inti
   segmentation.py            resize, threshold, pemilihan kontur, crop, highlight
-  features.py                resize 32x32, vektor fitur 64 elemen, jumlah segi
+  features.py                resize 32x32, vektor fitur 64 elemen, jumlah segi,
+                             histogram grayscale dan per kanal
+  plots.py                   gambar histogram yang dirender dengan OpenCV
   dataset.py                 bangun CSV dataset dari folder gambar
   __main__.py                CLI
 api/segment.py             fungsi Vercel (POST gambar mentah, balas PNG)
@@ -56,6 +58,16 @@ Buat crop region plat dari satu gambar, atau blur sekelilingnya:
 .venv/bin/python -m platnomor segment data/images/plat/rl2.jpg --out out/segment.png
 .venv/bin/python -m platnomor highlight data/images/plat/rl2.jpg --out out/highlight.png
 ```
+
+Gambar histogram grayscale dan RGB satu gambar (hasil port dari sel histogram di
+notebook upstream):
+
+```
+.venv/bin/python -m platnomor histogram data/images/plat/rl2.jpg --out out/histogram.png
+```
+
+Angka di balik gambar itu bisa diimpor lewat `platnomor.grayscale_histogram(image)`
+dan `platnomor.color_histograms(image)`.
 
 Lihat setiap tahap pipeline sebagai gambar:
 

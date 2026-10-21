@@ -28,7 +28,9 @@ ratio filter that can be added as an extra stage.
 ```
 platnomor/                 core Python package
   segmentation.py            resize, threshold, contour selection, crop, highlight
-  features.py                32x32 resize, 64 element feature vector, vertex count
+  features.py                32x32 resize, 64 element feature vector, vertex count,
+                             grayscale and per channel histograms
+  plots.py                   histogram figure drawn with OpenCV
   dataset.py                 build the dataset CSV from a folder of images
   __main__.py                CLI
 api/segment.py             Vercel function (POST raw image, answer a PNG)
@@ -59,6 +61,16 @@ Crop the plate region of one image, or blur everything around it:
 .venv/bin/python -m platnomor segment data/images/plat/rl2.jpg --out out/segment.png
 .venv/bin/python -m platnomor highlight data/images/plat/rl2.jpg --out out/highlight.png
 ```
+
+Draw the grayscale and RGB histograms of one image (ported from the histogram
+cell of the upstream notebook):
+
+```
+.venv/bin/python -m platnomor histogram data/images/plat/rl2.jpg --out out/histogram.png
+```
+
+The counts behind that figure are importable as
+`platnomor.grayscale_histogram(image)` and `platnomor.color_histograms(image)`.
 
 Render every pipeline stage as an image:
 
