@@ -1,9 +1,8 @@
 # CensorLicensePlate
 
-Segment the licence plate (and traffic sign) region of a vehicle photo with
-OpenCV. The detected region stays sharp while the rest of the image is blurred.
-The repo also turns a folder of images into a feature dataset for shape
-classification.
+Segment the licence plate (and traffic sign) region of a vehicle photo with OpenCV. 
+The detected region stays sharp while the rest of the image is blurred.
+The repo also turns a folder of images into a feature dataset for shape classification.
 
 Bahasa Indonesia: [README_id.md](README_id.md)
 
@@ -25,39 +24,38 @@ ratio filter that can be added as an extra stage.
 
 ## Repository layout
 
-```
-censor_license_plate/                 core Python package
-  segmentation.py            resize, threshold, contour selection, crop, highlight
-  features.py                32x32 resize, 64 element feature vector, vertex count,
-                             grayscale and per channel histograms
-  plots.py                   histogram figure drawn with OpenCV
-  dataset.py                 build the dataset CSV from a folder of images
-  __main__.py                CLI
-api/segment.py             Vercel function (POST raw image, answer a PNG)
-public/index.html          demo page that calls that function
-experiments/pipeline_steps.py  experiment log, writes one image per pipeline stage
-data/images/               input photos (plat/, rambu/)
-data/rambu_dataset.csv     feature dataset produced by the pipeline
+```tree
+censor_license_plate/         # core Python package
+  segmentation.py             # resize, threshold, contour selection, crop, highlight
+  features.py                 # 32x32 resize, 64 element feature vector, vertex count, grayscale and per channel histograms
+  plots.py                    # histogram figure drawn with OpenCV
+  dataset.py                  # build the dataset CSV from a folder of images
+  __main__.py                 # CLI
+api/segment.py                # Vercel function (POST raw image, answer a PNG)
+public/index.html             # demo page that calls that function
+experiments/pipeline_steps.py # experiment log, writes one image per pipeline stage
+data/images/                  # input photos (plat/, rambu/)
+data/rambu_dataset.csv        # feature dataset produced by the pipeline
 ```
 
 ## Running
 
 Requires Python 3.12 and OpenCV.
 
-```
+```bash 
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
 Rebuild the dataset from the image folder:
 
-```
+```bash
 .venv/bin/python -m censor_license_plate dataset --images data/images/rambu --csv data/rambu_dataset.csv
 ```
 
 Crop the plate region of one image, or blur everything around it:
 
-```
+```bash
 .venv/bin/python -m censor_license_plate segment data/images/plat/rl2.jpg --out out/segment.png
 .venv/bin/python -m censor_license_plate highlight data/images/plat/rl2.jpg --out out/highlight.png
 ```
@@ -65,7 +63,7 @@ Crop the plate region of one image, or blur everything around it:
 Draw the grayscale and RGB histograms of one image (ported from the histogram
 cell of the upstream notebook):
 
-```
+```bash
 .venv/bin/python -m censor_license_plate histogram data/images/plat/rl2.jpg --out out/histogram.png
 ```
 
@@ -96,7 +94,7 @@ Production: <https://censor-license-plate.vercel.app>
 the highlighted region. `public/index.html` uses that endpoint through a file
 upload form.
 
-```
+```bash
 vercel dev                      # local preview
 vercel deploy                   # preview deployment
 vercel deploy --prod --yes --project censor-license-plate
