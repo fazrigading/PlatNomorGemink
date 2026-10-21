@@ -1,7 +1,7 @@
 [project]
-name = "platnomor-gemink"
+name = "censor-license-plate"
 version = "0.1.0"
-description = "Segmentasi region plat nomor dan rambu dengan OpenCV"
+description = "Segment the licence plate and traffic sign region of a vehicle photo with OpenCV"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=1.26",

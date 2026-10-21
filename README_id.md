@@ -1,4 +1,4 @@
-# PlatNomorGemink
+# CensorLicensePlate
 
 Segmentasi region plat nomor (dan rambu) dari foto kendaraan dengan OpenCV.
 Region yang terdeteksi tetap tajam, sisanya diblur. Selain itu repo ini bisa
@@ -23,7 +23,7 @@ bisa dipakai sebagai tahap tambahan.
 ## Struktur repo
 
 ```
-platnomor/                 paket Python inti
+censor_license_plate/                 paket Python inti
   segmentation.py            resize, threshold, pemilihan kontur, crop, highlight
   features.py                resize 32x32, vektor fitur 64 elemen, jumlah segi,
                              histogram grayscale dan per kanal
@@ -49,25 +49,25 @@ python -m venv .venv
 Bangun ulang dataset dari folder gambar:
 
 ```
-.venv/bin/python -m platnomor dataset --images data/images/rambu --csv data/rambu_dataset.csv
+.venv/bin/python -m censor_license_plate dataset --images data/images/rambu --csv data/rambu_dataset.csv
 ```
 
 Buat crop region plat dari satu gambar, atau blur sekelilingnya:
 
 ```
-.venv/bin/python -m platnomor segment data/images/plat/rl2.jpg --out out/segment.png
-.venv/bin/python -m platnomor highlight data/images/plat/rl2.jpg --out out/highlight.png
+.venv/bin/python -m censor_license_plate segment data/images/plat/rl2.jpg --out out/segment.png
+.venv/bin/python -m censor_license_plate highlight data/images/plat/rl2.jpg --out out/highlight.png
 ```
 
 Gambar histogram grayscale dan RGB satu gambar (hasil port dari sel histogram di
 notebook upstream):
 
 ```
-.venv/bin/python -m platnomor histogram data/images/plat/rl2.jpg --out out/histogram.png
+.venv/bin/python -m censor_license_plate histogram data/images/plat/rl2.jpg --out out/histogram.png
 ```
 
-Angka di balik gambar itu bisa diimpor lewat `platnomor.grayscale_histogram(image)`
-dan `platnomor.color_histograms(image)`.
+Angka di balik gambar itu bisa diimpor lewat `censor_license_plate.grayscale_histogram(image)`
+dan `censor_license_plate.color_histograms(image)`.
 
 Lihat setiap tahap pipeline sebagai gambar:
 
@@ -87,7 +87,7 @@ Lihat setiap tahap pipeline sebagai gambar:
 
 ## Hosting di Vercel
 
-Produksi: <https://platnomor-gemink.vercel.app>
+Produksi: <https://censor-license-plate.vercel.app>
 
 `api/segment.py` menerima `POST` berisi byte gambar mentah dan membalas PNG
 hasil highlight. Halaman `public/index.html` memakai endpoint itu lewat form
@@ -96,7 +96,7 @@ unggah berkas.
 ```
 vercel dev                      # pratinjau lokal
 vercel deploy                   # deploy pratinjau
-vercel deploy --prod --yes --project platnomor-gemink
+vercel deploy --prod --yes --project censor-license-plate
 ```
 
 Vercel CLI tidak menemukan `api/segment.py` sendiri, jadi `pyproject.toml`

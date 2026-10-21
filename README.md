@@ -1,4 +1,4 @@
-# PlatNomorGemink
+# CensorLicensePlate
 
 Segment the licence plate (and traffic sign) region of a vehicle photo with
 OpenCV. The detected region stays sharp while the rest of the image is blurred.
@@ -26,7 +26,7 @@ ratio filter that can be added as an extra stage.
 ## Repository layout
 
 ```
-platnomor/                 core Python package
+censor_license_plate/                 core Python package
   segmentation.py            resize, threshold, contour selection, crop, highlight
   features.py                32x32 resize, 64 element feature vector, vertex count,
                              grayscale and per channel histograms
@@ -52,25 +52,25 @@ python -m venv .venv
 Rebuild the dataset from the image folder:
 
 ```
-.venv/bin/python -m platnomor dataset --images data/images/rambu --csv data/rambu_dataset.csv
+.venv/bin/python -m censor_license_plate dataset --images data/images/rambu --csv data/rambu_dataset.csv
 ```
 
 Crop the plate region of one image, or blur everything around it:
 
 ```
-.venv/bin/python -m platnomor segment data/images/plat/rl2.jpg --out out/segment.png
-.venv/bin/python -m platnomor highlight data/images/plat/rl2.jpg --out out/highlight.png
+.venv/bin/python -m censor_license_plate segment data/images/plat/rl2.jpg --out out/segment.png
+.venv/bin/python -m censor_license_plate highlight data/images/plat/rl2.jpg --out out/highlight.png
 ```
 
 Draw the grayscale and RGB histograms of one image (ported from the histogram
 cell of the upstream notebook):
 
 ```
-.venv/bin/python -m platnomor histogram data/images/plat/rl2.jpg --out out/histogram.png
+.venv/bin/python -m censor_license_plate histogram data/images/plat/rl2.jpg --out out/histogram.png
 ```
 
 The counts behind that figure are importable as
-`platnomor.grayscale_histogram(image)` and `platnomor.color_histograms(image)`.
+`censor_license_plate.grayscale_histogram(image)` and `censor_license_plate.color_histograms(image)`.
 
 Render every pipeline stage as an image:
 
@@ -90,7 +90,7 @@ Render every pipeline stage as an image:
 
 ## Hosting on Vercel
 
-Production: <https://platnomor-gemink.vercel.app>
+Production: <https://censor-license-plate.vercel.app>
 
 `api/segment.py` accepts a `POST` with raw image bytes and replies with a PNG of
 the highlighted region. `public/index.html` uses that endpoint through a file
@@ -99,7 +99,7 @@ upload form.
 ```
 vercel dev                      # local preview
 vercel deploy                   # preview deployment
-vercel deploy --prod --yes --project platnomor-gemink
+vercel deploy --prod --yes --project censor-license-plate
 ```
 
 The Vercel CLI does not discover `api/segment.py` on its own, so
