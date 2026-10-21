@@ -31,3 +31,20 @@ def vertex_count(contour: np.ndarray, epsilon_ratio: float = 0.01) -> int:
     """Number of polygon vertices of a contour, the `segi` column of the dataset."""
     perimeter = cv2.arcLength(contour, True)
     return len(cv2.approxPolyDP(contour, epsilon_ratio * perimeter, True))
+
+
+def grayscale_histogram(image: np.ndarray, bins: int = 256) -> np.ndarray:
+    """Histogram of the grayscale image, one count per intensity value."""
+    if image is None or image.size == 0:
+        raise ValueError("empty image")
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if image.ndim == 3 else image
+    return cv2.calcHist([gray], [0], None, [bins], [0, 256]).ravel()
+
+
+def color_histograms(image: np.ndarray, bins: int = 256) -> np.ndarray:
+    """Histogram of every BGR channel, shape (3, bins)."""
+    if image is None or image.ndim != 3:
+        raise ValueError("expected a colour image")
+    return np.array(
+        [cv2.calcHist([image], [channel], None, [bins], [0, 256]).ravel() for channel in range(3)]
+    )
