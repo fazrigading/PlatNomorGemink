@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "outputDirectory": "public",
+  "functions": {
+    "api/segment.py": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  }
+}

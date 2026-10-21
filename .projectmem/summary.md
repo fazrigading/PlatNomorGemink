@@ -12,7 +12,6 @@ Replace this placeholder with a concise description of what this project does, w
 - Refactor: refactor: group images and dataset under data/ [data/rambu_dataset.csv]
 
 ## Notes
-- repisi Gemink
 - Program Plat Nomor
 - Add files via upload
 - Add files via upload
@@ -22,6 +21,7 @@ Replace this placeholder with a concise description of what this project does, w
 - add rambu
 - iterate through images and convert feature with size into csv
 - iterate through img and convert to csv
+- New feature: feat: add platnomor package with segmentation, features and dataset CLI [experiments/pipeline_steps.py]
 
 ## Key files
 - `img.png`
