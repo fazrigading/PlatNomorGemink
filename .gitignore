@@ -8,10 +8,7 @@ venv/
 
 .codegraph/
 .commandcode/
-.projectmem/events.jsonl
-.projectmem/watch.pid
-.projectmem/watch.log
-.projectmem/structure.json
+.projectmem/
 
 out/
 *.egg-info/
