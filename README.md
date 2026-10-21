@@ -1,110 +1,116 @@
 # PlatNomorGemink
 
-Segmentasi region plat nomor (dan rambu) dari foto kendaraan dengan OpenCV.
-Region yang terdeteksi tetap tajam, sisanya diblur. Selain itu repo ini bisa
-mengubah folder gambar menjadi dataset fitur untuk klasifikasi bentuk.
+Segment the licence plate (and traffic sign) region of a vehicle photo with
+OpenCV. The detected region stays sharp while the rest of the image is blurred.
+The repo also turns a folder of images into a feature dataset for shape
+classification.
 
-## Cara kerja
+Bahasa Indonesia: [README_id.md](README_id.md)
 
-1. Gambar diskalakan ke lebar 1000 px, aspect ratio dipertahankan.
-2. Grayscale, lalu threshold Otsu (INV) dan Canny yang didilatasi.
-3. Kontur diurutkan berdasarkan luas; kontur peringkat 2 terbesar adalah plat
-   pada foto-foto di repo ini (kontur terbesar adalah tepi gambar).
-4. Mask kontur dipakai untuk crop region, atau untuk menyisakan region tetap
-   tajam sementara sisanya diblur.
+## How it works
 
-Setiap gambar dinormalisasi dulu ke 1000 px agar parameter (`-2`, divisor blur 7)
-konsisten. Pada `data/images/plat/rl2.jpg` pipeline ini menangkap seluruh plat
-`KT 6929 IA` tanpa distorsi; foto seperti itu yang jadi acuan, bukan foto miring
-dari sudut sempit. Untuk sudut yang lebih ekstrem langkah `geometry` di
-`experiments/pipeline_steps.py` memperlihatkan filter sudut dan aspect ratio yang
-bisa dipakai sebagai tahap tambahan.
+1. The image is scaled to 1000 px wide with the aspect ratio kept.
+2. Grayscale, then an inverted Otsu threshold and a dilated Canny edge map.
+3. Contours are sorted by area; the second largest one is the plate in the
+   photos of this repo (the largest is the image border).
+4. The contour mask crops the region, or keeps it sharp while the rest of the
+   image is blurred.
 
-## Struktur repo
+Every image is normalised to 1000 px first so the parameters (rank `-2`, blur
+divisor 7) stay consistent. On `data/images/plat/rl2.jpg` the pipeline captures
+the whole `KT 6929 IA` plate without distortion; that photo is the reference,
+not close-up shots taken at a narrow angle. For more extreme angles the
+`geometry` step in `experiments/pipeline_steps.py` shows the angle and aspect
+ratio filter that can be added as an extra stage.
+
+## Repository layout
 
 ```
-platnomor/                 paket Python inti
-  segmentation.py            resize, threshold, pemilihan kontur, crop, highlight
-  features.py                resize 32x32, vektor fitur 64 elemen, jumlah segi
-  dataset.py                 bangun CSV dataset dari folder gambar
+platnomor/                 core Python package
+  segmentation.py            resize, threshold, contour selection, crop, highlight
+  features.py                32x32 resize, 64 element feature vector, vertex count
+  dataset.py                 build the dataset CSV from a folder of images
   __main__.py                CLI
-api/segment.py             fungsi Vercel (POST gambar mentah, balas PNG)
-public/index.html          halaman demo yang memanggil fungsi tersebut
-experiments/pipeline_steps.py  catatan langkah eksperimen, hasilkan gambar tiap tahap
-data/images/               foto masukan (plat/, rambu/)
-data/rambu_dataset.csv     dataset fitur hasil pipeline
+api/segment.py             Vercel function (POST raw image, answer a PNG)
+public/index.html          demo page that calls that function
+experiments/pipeline_steps.py  experiment log, writes one image per pipeline stage
+data/images/               input photos (plat/, rambu/)
+data/rambu_dataset.csv     feature dataset produced by the pipeline
 ```
 
-## Menjalankan
+## Running
 
-Butuh Python 3.12 dan OpenCV.
+Requires Python 3.12 and OpenCV.
 
 ```
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
-Bangun ulang dataset dari folder gambar:
+Rebuild the dataset from the image folder:
 
 ```
 .venv/bin/python -m platnomor dataset --images data/images/rambu --csv data/rambu_dataset.csv
 ```
 
-Buat crop region plat dari satu gambar, atau blur sekelilingnya:
+Crop the plate region of one image, or blur everything around it:
 
 ```
 .venv/bin/python -m platnomor segment data/images/plat/rl2.jpg --out out/segment.png
 .venv/bin/python -m platnomor highlight data/images/plat/rl2.jpg --out out/highlight.png
 ```
 
-Lihat setiap tahap pipeline sebagai gambar:
+Render every pipeline stage as an image:
 
 ```
 .venv/bin/python experiments/pipeline_steps.py data/images/plat/rl2.jpg out/pipeline_steps
 ```
 
-## Format dataset
+## Dataset format
 
-`data/rambu_dataset.csv` berisi kolom:
+`data/rambu_dataset.csv` has these columns:
 
-| kolom | isi |
+| column | content |
 | --- | --- |
-| `nama` | nama berkas gambar di `data/images/rambu/` |
-| `fitur` | 64 angka: jumlah piksel aktif per kolom (32) lalu per baris (32) dari crop 32x32 biner |
-| `segi` | jumlah titik polygon hasil `approxPolyDP` kontur, dipakai sebagai label bentuk |
+| `nama` | file name of the image in `data/images/rambu/` |
+| `fitur` | 64 numbers: active pixel count per column (32) then per row (32) of the binarised 32x32 crop |
+| `segi` | vertex count of the contour from `approxPolyDP`, used as the shape label |
 
-## Hosting di Vercel
+## Hosting on Vercel
 
-Produksi: <https://platnomor-gemink.vercel.app>
+Production: <https://platnomor-gemink.vercel.app>
 
-`api/segment.py` menerima `POST` berisi byte gambar mentah dan membalas PNG
-hasil highlight. Halaman `public/index.html` memakai endpoint itu lewat form
-unggah berkas.
+`api/segment.py` accepts a `POST` with raw image bytes and replies with a PNG of
+the highlighted region. `public/index.html` uses that endpoint through a file
+upload form.
 
 ```
-vercel dev                      # pratinjau lokal
-vercel deploy                   # deploy pratinjau
+vercel dev                      # local preview
+vercel deploy                   # preview deployment
 vercel deploy --prod --yes --project platnomor-gemink
 ```
 
-Vercel CLI tidak menemukan `api/segment.py` sendiri, jadi `pyproject.toml`
-mendeklarasikan entrypoint-nya:
+The Vercel CLI does not discover `api/segment.py` on its own, so
+`pyproject.toml` declares its entrypoint:
 
 ```toml
 [tool.vercel]
 entrypoint = "api.segment:handler"
 ```
 
-CLI juga menjalankan `uv lock` dengan `pyproject.toml` sebagai proyek, jadi
-tabel `[project]` wajib ada dan `[project.dependencies]` harus memuat `numpy`
-serta `opencv-python-headless`. `requirements.txt` tetap dipakai runtime.
+The CLI also runs `uv lock` with `pyproject.toml` as the project, so the
+`[project]` table is required and `[project.dependencies]` must list `numpy` and
+`opencv-python-headless`. `requirements.txt` is still what the runtime installs.
 
-Proyek ini punya Deployment Protection, jadi URL produksi meminta login Vercel.
-Gunakan `vercel curl <url>` atau matikan proteksi di dashboard. `.vercelignore`
-menyisihkan `.codegraph/`, `.projectmem/`, `.commandcode/`, `.venv/`, dan `out/`
-saat unggah; berkas di `data/` ikut terunggah tetapi tidak dipakai saat request.
+This project has Deployment Protection enabled, so the production URL asks for a
+Vercel login. Use `vercel curl <url>` or turn the protection off in the
+dashboard. `.vercelignore` keeps `.codegraph/`, `.projectmem/`, `.commandcode/`
+and `.venv/` out of the upload; files in `data/` are uploaded but not used per
+request.
 
-## Catatan
+## Notes
 
-- `data/images/plat/` adalah foto plat nomor, `data/images/rambu/` adalah rambu.
-- Model klasifikasi belum ada; repo ini berhenti di segmentasi dan ekstraksi fitur.
+- `data/images/plat/` holds licence plate photos, `data/images/rambu/` holds
+  traffic signs.
+- There is no classifier yet; the repo stops at segmentation and feature
+  extraction.
