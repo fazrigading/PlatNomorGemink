@@ -1,0 +1,12 @@
+[project]
+name = "platnomor-gemink"
+version = "0.1.0"
+description = "Segmentasi region plat nomor dan rambu dengan OpenCV"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=1.26",
+    "opencv-python-headless>=4.8",
+]
+
+[tool.vercel]
+entrypoint = "api.segment:handler"
