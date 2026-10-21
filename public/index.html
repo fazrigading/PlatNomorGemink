@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CensorLicensePlate — licence plate region censor</title>
+    <title>CensorLicensePlate — license plate region censor</title>
     <style>
       :root {
         color-scheme: dark;
@@ -79,6 +79,9 @@
         font-weight: 500;
         cursor: pointer;
         transition: border-color 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
       }
       .controls button:hover {
         border-color: var(--accent);
@@ -252,9 +255,9 @@
     <script>
       const I18N = {
         en: {
-          title: "CensorLicensePlate — licence plate region censor",
+          title: "CensorLicensePlate — license plate region censor",
           lead:
-            "Finds the licence plate or traffic sign region of a photo with OpenCV. " +
+            "Finds the license plate or traffic sign region of a photo with OpenCV. " +
             "Censor blurs that region so the plate cannot be read; Highlight keeps it " +
             "sharp and blurs everything else.",
           fileLabel: "Pick a vehicle photo (JPG or PNG, up to 8 MB)",
@@ -326,7 +329,7 @@
         for (const node of document.querySelectorAll("[data-i18n-alt]")) {
           node.alt = t(node.dataset.i18nAlt);
         }
-        langButton.textContent = lang === "en" ? "ID" : "EN";
+        langButton.textContent = lang === "en" ? "🇮🇩 ID" : "🇬🇧 EN";
         langButton.setAttribute("aria-label", t("langLabel"));
         langButton.title = t("langLabel");
       }

@@ -168,3 +168,9 @@ saat unggah; berkas di `data/` ikut terunggah tetapi tidak dipakai saat request.
 
 - `data/images/plat/` adalah foto plat nomor, `data/images/rambu/` adalah rambu.
 - Model klasifikasi belum ada; repo ini berhenti di segmentasi dan ekstraksi fitur.
+
+## Lisensi
+
+MIT, lihat [LICENSE](LICENSE). © 2026 Fazri Gading.
+
+Sumber: <https://github.com/fazrigading/censor-license-plate>

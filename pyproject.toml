@@ -1,7 +1,9 @@
 [project]
 name = "censor-license-plate"
 version = "0.1.0"
-description = "Segment the licence plate and traffic sign region of a vehicle photo with OpenCV"
+description = "Segment the license plate and traffic sign region of a vehicle photo with OpenCV"
+authors = [{ name = "Fazri Gading", email = "fazrigading@gmail.com" }]
+license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=1.26",

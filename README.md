@@ -1,6 +1,6 @@
 # CensorLicensePlate
 
-Segment the licence plate (and traffic sign) region of a vehicle photo with OpenCV.
+Segment the license plate (and traffic sign) region of a vehicle photo with OpenCV.
 The detected region is then either blurred or shown, depending on the mode.
 
 | mode | detected region | rest of the image |
@@ -172,7 +172,13 @@ request.
 
 ## Notes
 
-- `data/images/plat/` holds licence plate photos, `data/images/rambu/` holds
+- `data/images/plat/` holds license plate photos, `data/images/rambu/` holds
   traffic signs.
 - There is no classifier yet; the repo stops at segmentation and feature
   extraction.
+
+## License
+
+MIT, see [LICENSE](LICENSE). © 2026 Fazri Gading.
+
+Source: <https://github.com/fazrigading/censor-license-plate>
