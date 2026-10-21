@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+.vercel/
+.vercelignore
+
+.codegraph/
+.commandcode/
+.projectmem/events.jsonl
+.projectmem/watch.pid
+.projectmem/watch.log
+.projectmem/structure.json
+
+out/
+*.egg-info/
