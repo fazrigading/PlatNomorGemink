@@ -1,0 +1,7 @@
+.codegraph/
+.projectmem/
+.commandcode/
+.venv/
+out/
+__pycache__/
+*.py[cod]
